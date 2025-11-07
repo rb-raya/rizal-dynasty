@@ -1,0 +1,139 @@
+---
+title: "Dynasty"
+author: "RB Raya"
+output: github_document
+date: "2025-11-07"
+---
+
+```{r packages}
+library(tidyverse)
+library(readxl)
+library(viridis)
+```
+
+```{r load-dataset}
+dynasty <- read_excel("dynasty.xlsx")
+
+dynasty <- dynasty %>% 
+  mutate(`Last Name` = str_to_title(`Last Name`),
+         Position = str_to_title(Position))
+```
+
+
+## Plots
+
+```{r bar-chart}
+dynasty <- dynasty %>% 
+   mutate(Position = fct_relevel(Position,
+                                 "Councilor", 
+                                 "Vice Mayor",
+                                 "Mayor",
+                                 "Provincial Board Member",
+                                 "Vice Governor", 
+                                 "Member, House of Representatives",
+                                 "Governor", 
+                                 ))
+
+dynasty %>% 
+  filter(Province == "RIZAL", fat == 1) %>% 
+    ggplot(aes(x = after_stat(count), y = fct_rev(fct_infreq(`Last Name`)), fill = Position)) +
+    geom_bar(stat = "count", position = "stack", color = "black") +
+  labs(
+      title = "Number of Fat Political Dynasties by Position in Rizal Province (2004–2016)",
+      x = "Number of Members",
+      y = "Last Name", 
+      caption = "Source: Ateneo Policy Center"
+    ) +
+    theme_minimal() +
+    scale_fill_viridis_d()
+```
+
+```{r overall-count}
+dynasty %>%
+  filter(Province == "RIZAL", fat == 1) %>%
+  group_by(Year) %>%
+  summarise(Dynasty_Count = n()) %>%
+  ungroup() %>%
+  ggplot(aes(x = Year, y = Dynasty_Count)) +
+ geom_line(color = "#440154FF", size = 1) + 
+  geom_point(color = "#440154FF", size = 2) +
+  labs(
+    title = "Trend of Fat Political Dynasties Over Time in Rizal (2004–2016)",
+    subtitle = "Count of families with multiple members simultaneously holding office over time",
+    x = "Election Year",
+    y = "Number of Fat Dynasties", 
+    caption = "Source: Ateneo Policy Center"
+  ) +
+  scale_x_continuous(breaks = unique(dynasty$Year)) +
+  scale_color_viridis_d() +
+  theme_minimal()
+
+dynasty %>%
+  filter(Province %in% c("RIZAL", "LAGUNA", "QUEZON"), fat == 1) %>%
+  group_by(Year, Province) %>%
+  summarise(Dynasty_Count = n()) %>%
+  ungroup() %>%
+  ggplot(aes(x = Year, y = Dynasty_Count)) +
+ geom_line(color = "#440154FF", size = 1) + 
+  geom_point(color = "#440154FF", size = 2) +
+  labs(
+    title = "Trend of Fat Political Dynasties Over Time in Laguna, Quezon, and Rizal (2004–2016)",
+    subtitle = "Count of families with multiple members simultaneously holding office over time",
+    x = "Election Year",
+    y = "Number of Fat Dynasties", 
+    caption = "Source: Ateneo Policy Center"
+  ) +
+  scale_x_continuous(breaks = unique(dynasty$Year)) +
+  scale_color_viridis_d() +
+  theme_minimal() +
+  facet_wrap(~Province, nrow = 1)
+
+
+```
+
+```{r postion-specific-count}
+dynasty %>%
+  filter(Province == "RIZAL", fat == 1) %>% 
+  group_by(Year, Position) %>%
+  summarise(fat_count = n(), .groups = 'drop') %>%
+  ggplot(aes(x = Year, y = fat_count, color = Position)) +
+  geom_line(size = 1) + 
+  geom_point(size = 2) + 
+  scale_color_viridis_d() +
+  labs(
+    title = "Trend of Fat Political Dynasties in Rizal by Position (2004–2016)",
+    subtitle = "Count of families with multiple members simultaneously holding office over time",
+    x = "Election Year",
+    y = "Number of Fat Dynasties",
+    color = "Position Held",
+    caption = "Source: Ateneo Policy Center"
+  ) +
+  scale_x_continuous(breaks = unique(dynasty$Year)) +
+  theme_minimal() 
+
+dynasty %>%
+  filter(Province %in% c("RIZAL", "LAGUNA", "QUEZON"), fat == 1) %>% 
+  group_by(Year, Position, Province) %>%  
+  summarise(fat_count = n(), .groups = 'drop') %>%
+  ggplot(aes(x = Year, y = fat_count, color = Position)) +
+  geom_line(size = 1) + 
+  geom_point(size = 2) + 
+  scale_color_viridis_d() +
+  labs(
+    title = "Trend of Fat Political Dynasties by Position in Laguna, Quezon, and Rizal (2004–2016)",
+    subtitle = "Count of families with multiple members simultaneously holding office over time",
+    x = "Election Year",
+    y = "Number of Fat Dynasties",
+    color = "Position Held",
+    caption = "Source: Ateneo Policy Center"
+  ) +
+  scale_x_continuous(breaks = unique(dynasty$Year)) +
+  theme_minimal() +
+  facet_wrap(~Province, nrow = 1)
+
+```
+
+
+
+
+
